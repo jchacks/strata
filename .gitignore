@@ -1,0 +1,8 @@
+# Secrets
+.env
+
+# Builds
+/target
+
+# Local API/cache data
+/cache
