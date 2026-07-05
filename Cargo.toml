@@ -6,13 +6,17 @@ license = "MIT"
 
 [dependencies]
 anyhow = "1.0.103"
+async-trait = "0.1.89"
 chrono = { version = "0.4.45", features = ["serde"] }
 dotenvy = "0.15.7"
 futures = "0.3.32"
-reqwest = { version = "0.13.4", features = ["json"] }
+reqwest = { version = "0.13.4", features = ["json", "native-tls"] }
 rust_decimal = {version = "1.42.1", features = ["serde"]}
+schemars = { version = "1.2.1", features = ["chrono04", "rust_decimal1"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 thiserror = "2.0.18"
 tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"]}
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
 url = "2.5.8"

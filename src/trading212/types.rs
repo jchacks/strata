@@ -1,82 +1,14 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
-use reqwest::{Client, Url};
 use rust_decimal::Decimal;
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de::DeserializeOwned};
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum Trading212Error {
-    #[error("invalid base URL: {0}")]
-    InvalidBaseUrl(#[from] url::ParseError),
-
-    #[error("HTTP request failed: {0}")]
-    Request(#[from] reqwest::Error),
-
-    #[error("Trading 212 API returned an error: status {status}, body: {body}")]
-    Api {
-        status: reqwest::StatusCode,
-        body: String,
-    },
-}
-
-#[derive(Debug)]
-pub struct Trading212Client {
-    http: Client,
-    base_url: Url,
-    api_key: String,
-    api_secret: String,
-}
-
-impl Trading212Client {
-    pub fn new(
-        base_url: impl AsRef<str>,
-        api_key: String,
-        api_secret: String,
-    ) -> Result<Self, Trading212Error> {
-        Ok(Self {
-            http: Client::new(),
-            base_url: Url::parse(base_url.as_ref())?,
-            api_key,
-            api_secret,
-        })
-    }
-
-    async fn send_get<T>(&self, path: &str) -> Result<T, Trading212Error>
-    where
-        T: DeserializeOwned,
-    {
-        let url = self.base_url.join(path)?;
-
-        let response = self
-            .http
-            .get(url)
-            .basic_auth(&self.api_key, Some(&self.api_secret))
-            .send()
-            .await?;
-        let status = response.status();
-
-        if !status.is_success() {
-            let body = response.text().await?;
-            return Err(Trading212Error::Api { status, body });
-        }
-
-        let data = response.json::<T>().await?;
-        Ok(data)
-    }
-    pub async fn get_pies(&self) -> Result<FetchAllPiesResponse, Trading212Error> {
-        self.send_get("equity/pies").await
-    }
-
-    pub async fn get_pie(&self, pie_id: u64) -> Result<PieDetailed, Trading212Error> {
-        self.send_get(&format!("equity/pies/{pie_id}")).await
-    }
-}
+use schemars::JsonSchema;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub type FetchAllPiesResponse = Vec<PieSummary>;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Summary information for a Trading 212 pie returned by the fetch-all-pies endpoint.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PieSummary {
     pub id: u64,
@@ -87,14 +19,16 @@ pub struct PieSummary {
     pub status: Option<PieStatus>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Detailed Trading 212 pie information returned by the fetch-pie endpoint.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PieDetailed {
     pub instruments: Vec<PieInstrument>,
     pub settings: PieSettings,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Dividend totals for a Trading 212 pie.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DividendDetails {
     pub gained: Decimal,
@@ -102,7 +36,8 @@ pub struct DividendDetails {
     pub reinvested: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Investment result values reported by Trading 212.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct InvestmentResult {
     pub price_avg_invested_value: Option<Decimal>,
@@ -112,7 +47,8 @@ pub struct InvestmentResult {
     pub price_avg_value_coef: Option<Decimal>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Instrument included in a Trading 212 pie.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PieInstrument {
     pub ticker: String,
@@ -123,7 +59,8 @@ pub struct PieInstrument {
     pub issues: Vec<PieInstrumentIssue>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Settings for a Trading 212 pie.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PieSettings {
     pub name: String,
@@ -151,7 +88,8 @@ pub struct PieSettings {
     pub public_url: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Status of a pie relative to its configured goal.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PieStatus {
     Ahead,
@@ -162,7 +100,8 @@ pub enum PieStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Action Trading 212 applies to dividend cash for the pie.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum DividendCashAction {
     Reinvest,
@@ -172,7 +111,8 @@ pub enum DividendCashAction {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Issue reported by Trading 212 for an instrument in a pie.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PieInstrumentIssue {
     Delisted,
