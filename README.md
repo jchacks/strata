@@ -1,29 +1,29 @@
 # Strata
 
-Strata is a local portfolio analysis project for exploring ETF holdings, portfolio structure, and exposure.
+Strata is a local portfolio analysis project for exploring holdings, portfolio structure, and exposure.
 
-It combines a deterministic Rust core with typed tools that can be called by an agent. The core is responsible for collecting and shaping portfolio facts; the agent is used to ask questions and explain structured outputs.
+It combines a deterministic Rust core with typed tools that can be called by an agent. Broker integrations are just one source of those tools: the current implementation uses Trading 212 Pies for testing against real portfolio data, but the design is intended to support other brokers and data sources.
 
 Strata is not, and will not become, an automatic trading bot.
 
 > [!IMPORTANT]
 > Strata is a personal portfolio analysis and research tool. It does not provide financial, investment, tax, or legal advice. Outputs are informational only and may be incomplete or incorrect. You are responsible for verifying results and making your own investment decisions.
 >
-> Strata does not place trades, modify Trading 212 pies, or perform automatic rebalancing.
+> Strata does not place trades, modify broker accounts, or perform automatic rebalancing.
 
 ## Overview
 
-The project is currently focused on getting the core tool-calling loop working with real portfolio data from Trading 212.
+The project is currently focused on getting the core tool-calling loop working with real portfolio data. Trading 212 Pies are the first integration because they provide a practical test case, not because Strata is intended to be tied to a single broker.
 
 The broader direction is to make portfolio data easier to inspect and reason about: holdings, weights, overlap, exposure, policy alignment, and related explanations. The exact shape of those features is intentionally still evolving.
 
-The main boundary is simple: Rust tools produce facts; the agent explains them.
+The main boundary is simple: broker/data-source tools produce facts; the agent explains them.
 
 ## Current status
 
 Implemented:
 
-- Trading 212 pie summary/detail fetches
+- Trading 212 pie summary/detail fetches as the first broker integration
 - local cache for Trading 212 pie data
 - `get_portfolio_summary` typed tool
 - OpenAI-compatible chat-completions adapter
@@ -41,8 +41,7 @@ Not implemented yet:
 
 ### `get_portfolio_summary`
 
-Returns a read-only Trading 212 portfolio summary
- containing:
+Returns a read-only portfolio summary from the current Trading 212 integration containing:
 
 - pie names
 - instrument tickers
@@ -62,11 +61,11 @@ TRADING212_API_KEY=...
 TRADING212_API_SECRET=...
 
 OPENROUTER_API_KEY=...
-LLM_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
+MODEL_NAME=nvidia/nemotron-3-ultra-550b-a55b:free
 
 # Or use an OpenAI API key instead:
 # OPENAI_API_KEY=...
-# LLM_MODEL=gpt-4.1-mini
+# MODEL_NAME=gpt-4.1-mini
 ```
 
 `.env` and `cache/` are ignored by git.

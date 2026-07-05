@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
         .or_else(|_| std::env::var("OPENAI_API_KEY"))
         .context("OPENROUTER_API_KEY or OPENAI_API_KEY is not set")?;
 
-    let llm_model = std::env::var("LLM_MODEL")
+    let model_name = std::env::var("MODEL_NAME")
         .unwrap_or_else(|_| "meta-llama/llama-3.1-8b-instruct:free".to_string());
 
     let t212_client =
@@ -41,9 +41,9 @@ async fn main() -> anyhow::Result<()> {
     };
 
     let provider = if std::env::var("OPENROUTER_API_KEY").is_ok() {
-        OpenAiCompatibleChatProvider::openrouter(llm_api_key, llm_model)
+        OpenAiCompatibleChatProvider::openrouter(llm_api_key, model_name)
     } else {
-        OpenAiCompatibleChatProvider::openai(llm_api_key, llm_model)
+        OpenAiCompatibleChatProvider::openai(llm_api_key, model_name)
     };
     let answer = run_tool_loop(&provider, &registry, prompt).await?;
 
